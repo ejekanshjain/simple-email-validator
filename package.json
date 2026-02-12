@@ -1,10 +1,10 @@
 {
   "name": "@ejekanshjain/simple-email-validator",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple email validator utility.",
   "main": "build/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf build && rm -rf tsconfig.tsbuildinfo && tsc",
     "test": "bun src/test.ts"
   },
   "repository": {
