@@ -26,8 +26,7 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "./build",
-    "removeComments": true
+    "outDir": "./build"
   },
   "include": ["**/*.ts", "**/*.cjs", "**/*.mjs"],
   "exclude": ["node_modules"]
