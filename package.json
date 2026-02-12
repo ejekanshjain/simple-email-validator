@@ -1,0 +1,33 @@
+{
+  "name": "@ejekanshjain/simple-email-validator",
+  "version": "1.0.0",
+  "description": "A simple email validator utility.",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "bun src/test.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ejekanshjain/simple-email-validator.git"
+  },
+  "keywords": [
+    "email",
+    "validator",
+    "javascript",
+    "typescript"
+  ],
+  "author": "Ekansh Jain",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ejekanshjain/simple-email-validator/issues"
+  },
+  "homepage": "https://github.com/ejekanshjain/simple-email-validator#readme",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "fakefilter": "^0.1.1401"
+  }
+}
