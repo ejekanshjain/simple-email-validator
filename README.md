@@ -1,289 +1,279 @@
 # Simple Email Validator
 
-A comprehensive TypeScript email validation library that goes beyond basic syntax checking. It verifies email deliverability through DNS MX records, SMTP handshakes, and detects disposable email addresses.
+A brutally honest, no-bullshit TypeScript email validation library that doesn’t just check if your email _looks_ legit — it actually checks if the damn thing can receive mail.
 
-## Features
+This isn’t some cute regex-only toy. This shit goes all the way:
+DNS, MX, SMTP handshake — the whole fucking pipeline.
 
-- ✅ **Syntax Validation** - Validates email format against RFC-compliant patterns
-- 🚫 **Disposable Email Detection** - Blocks temporary and fake email providers
-- 🌐 **DNS MX Verification** - Confirms domain has valid mail servers
-- 📬 **SMTP Deliverability Test** - Connects to mail servers to verify address existence
-- ⚡ **Smart Provider Handling** - Skips SMTP checks for providers that block verification (Yahoo, Outlook, etc.)
-- 🎛️ **Configurable** - Enable/disable specific validation checks as needed
-- 🔒 **TypeScript Native** - Full type safety with comprehensive interfaces
+---
+
+## What This Bad Boy Does
+
+- ✅ **Syntax Validation** – RFC-style format checks. No stupid `a@b` garbage.
+- 🚫 **Disposable Email Detection** – Blocks fake/temp inbox bullshit using `fakefilter`.
+- 🌐 **DNS MX Verification** – Checks if the domain even has mail servers configured.
+- 📬 **SMTP Deliverability Test** – Talks directly to the mail server like, “yo, does this user exist?”
+- ⚡ **Smart Provider Handling** – Skips SMTP for big boys like Yahoo, Outlook, Hotmail, AOL, and iCloud because they block verification and don’t give a shit.
+- 🎛️ **Configurable as Hell** – Turn checks on/off depending on how paranoid you are.
+- 🔒 **TypeScript Native** – Proper types. No `any` nonsense. Powered by TypeScript.
+
+---
 
 ## Installation
+
+Install it like a civilized engineer:
 
 ```bash
 npm install @ejekanshjain/simple-email-validator
 ```
 
-or
+Or if you’re fancy:
 
 ```bash
 pnpm install @ejekanshjain/simple-email-validator
 ```
 
-or
+Or living that fast life:
 
 ```bash
 bun install @ejekanshjain/simple-email-validator
 ```
 
-## Quick Start
+---
 
-```typescript
+## Quick Start (Let’s Validate Some Shit)
+
+```ts
 import { validateEmail } from '@ejekanshjain/simple-email-validator'
 
 const result = await validateEmail({ email: 'user@example.com' })
 
 if (result.isValid === true) {
-  console.log('✓ Email is valid and deliverable')
+  console.log('✓ This email is legit as fuck')
 } else if (result.isValid === false) {
-  console.log(`✗ Invalid: ${result.status}`)
+  console.log(`✗ Nope. Broken shit: ${result.status}`)
 } else {
-  console.log(`⚠ Could not verify: ${result.status}`)
+  console.log(`⚠ Could not verify. Server being shady: ${result.status}`)
 }
 ```
 
-## Validation Process
+---
 
-The library performs validation in multiple steps:
+## How The Hell It Works
 
-1. **Syntax Check** - Validates email format using regex
-   - Cannot start with a dot
-   - Cannot have consecutive dots
-   - Allows alphanumeric, underscore, plus, apostrophe, hyphen, and dot
-   - Domain must have proper structure with at least 2-character TLD
+This library doesn’t half-ass validation. It goes step by step:
 
-2. **Disposable Email Check** - Detects temporary/fake email providers
-   - Uses the `fakefilter` package to identify known disposable domains
+### 1. Syntax Check
 
-3. **DNS MX Check** - Verifies domain has mail servers configured
-   - Queries DNS for MX records
-   - Selects the highest priority mail server
+Regex-based validation:
 
-4. **Provider Detection** - Identifies providers that block verification
-   - Skips SMTP for Yahoo, Outlook, Hotmail, AOL, iCloud
-   - Prevents false negatives from anti-verification measures
+- No starting with a dot like `.idiot@example.com`
+- No consecutive dots
+- Proper TLD (at least 2 characters)
+- Only valid characters allowed
 
-5. **SMTP Handshake** - Tests actual deliverability
-   - Connects to the mail server on port 25
-   - Performs HELO/MAIL FROM/RCPT TO handshake
-   - Detects hard bounces vs temporary issues
+If it fails here, it’s dead. End of story.
 
-## API Reference
+---
+
+### 2. Disposable Email Check
+
+Uses `fakefilter` to detect trash providers.
+
+If someone signs up with `tempmail-123@randomshit.com`, we shut that down instantly.
+
+---
+
+### 3. DNS MX Check
+
+We query DNS for MX records.
+
+No MX?
+That domain is basically a corpse.
+
+---
+
+### 4. Provider Detection
+
+Big providers like Gmail and others don’t like being pinged.
+
+So instead of giving you false negatives and random bullshit failures, we skip SMTP verification for them.
+
+Smart. Not reckless.
+
+---
+
+### 5. SMTP Handshake (The Real Test)
+
+This is where shit gets real.
+
+- Connect to port 25
+- HELO
+- MAIL FROM
+- RCPT TO
+- Interpret server response
+
+If the server says:
+
+- “User unknown” → it’s dead.
+- Temporary error → we return `null`.
+- Accepts recipient → deliverable (unless catch-all).
+
+This is as close as you get without actually sending an email.
+
+---
+
+## API
 
 ### `validateEmail(options)`
 
-Validates an email address through multiple verification steps.
-
-#### Parameters
-
-```typescript
+```ts
 {
-  email: string           // The email address to validate (required)
-  timeoutMs?: number      // SMTP connection timeout in ms (default: 5000)
-  regexCheck?: boolean    // Enable syntax validation (default: true)
-  fakeEmailCheck?: boolean // Enable disposable email detection (default: true)
+  email: string
+  timeoutMs?: number
+  regexCheck?: boolean
+  fakeEmailCheck?: boolean
 }
 ```
 
-#### Returns
+Returns:
 
-```typescript
+```ts
 Promise<ValidationResult>
 ```
 
-### `ValidationResult` Interface
+---
 
-```typescript
+## ValidationResult
+
+```ts
 interface ValidationResult {
-  /**
-   * Validation result:
-   * - `true`: Email is deliverable and safe
-   * - `false`: Email is invalid or undeliverable
-   * - `null`: Cannot verify (timeout, greylisting, or provider blocks)
-   */
   isValid: boolean | null
-
-  /** Human-readable status message */
   status: string
-
-  /** Technical details or error message */
   reason?: string
-
-  /** The MX record hostname used for verification */
   mxRecord?: string
 }
 ```
 
-## Usage Examples
+### Meaning of `isValid`
 
-### Basic Validation
+- `true` → This email is good to go.
+- `false` → Absolutely broken.
+- `null` → Couldn’t verify. Server said “nah” or timed out.
 
-```typescript
-import { validateEmail } from '@ejekanshjain/simple-email-validator'
+---
 
-const result = await validateEmail({
-  email: 'john.doe@gmail.com'
-})
+## Possible Status Values (Know Your Shit)
 
-console.log(result)
-// {
-//   isValid: null,
-//   status: 'Skipped SMTP (Provider blocks pings)',
-//   reason: 'Provider likely blocks direct SMTP checks, cannot verify deliverability',
-//   mxRecord: 'gmail-smtp-in.l.google.com'
-// }
-```
+| Status                               | isValid | What It Means             |
+| ------------------------------------ | ------- | ------------------------- |
+| Deliverable                          | true    | Email is solid            |
+| Invalid Syntax                       | false   | Format is garbage         |
+| Disposable Email Detected            | false   | Fake/temp inbox           |
+| No MX Records (Domain Dead)          | false   | Domain has no mail server |
+| User Unknown                         | false   | Address doesn’t exist     |
+| Skipped SMTP (Provider blocks pings) | null    | Big provider blocking     |
+| Timeout                              | null    | Server too slow           |
+| Connection Error                     | null    | Couldn’t connect          |
+| Server Reject (Greylist/Spam)        | null    | Server didn’t like us     |
 
-### Custom Timeout
+---
 
-```typescript
-const result = await validateEmail({
-  email: 'user@slowserver.com',
-  timeoutMs: 10000 // Wait up to 10 seconds
-})
-```
+## Real Talk: Important Considerations
 
-### Skip Specific Checks
+### False Negatives
 
-```typescript
-// Only perform SMTP verification, skip syntax and disposable checks
-const result = await validateEmail({
-  email: 'user@example.com',
-  regexCheck: false,
-  fakeEmailCheck: false
-})
-```
+Big providers block SMTP verification.
+Greylisting exists.
+Anti-spam filters exist.
 
-### Handling Different Results
+Sometimes you’ll get `null`. That’s life.
 
-```typescript
-const result = await validateEmail({ email: userInput })
+---
 
-if (result.isValid === true) {
-  // Email is verified deliverable
-  await sendWelcomeEmail(userInput)
-} else if (result.isValid === false) {
-  // Email is definitely invalid
-  switch (result.status) {
-    case 'Invalid Syntax':
-      console.error('Please enter a valid email format')
-      break
-    case 'Disposable Email Detected':
-      console.error('Temporary email addresses are not allowed')
-      break
-    case 'No MX Records (Domain Dead)':
-      console.error('This domain cannot receive emails')
-      break
-    case 'User Unknown':
-      console.error('This email address does not exist')
-      break
-  }
-} else {
-  // Could not verify (null)
-  // Decision: accept or reject based on your risk tolerance
-  console.warn(`Could not verify email: ${result.status}`)
-  // You might choose to accept these emails anyway
-}
-```
+### False Positives
 
-### Form Validation Example
+Catch-all servers exist.
+Some mail servers accept everything and bounce later.
 
-```typescript
-async function validateRegistrationEmail(email: string): Promise<{
-  valid: boolean
-  message: string
-}> {
-  const result = await validateEmail({ email })
+So yeah, no validator on Earth is 100% perfect.
 
-  // Treat null as valid (cannot verify, but not definitively invalid)
-  if (result.isValid === true || result.isValid === null) {
-    return { valid: true, message: 'Email accepted' }
-  }
-
-  // Customize messages for different failure modes
-  const messages: Record<string, string> = {
-    'Invalid Syntax': 'Please enter a valid email address',
-    'Disposable Email Detected': 'Temporary email addresses are not allowed',
-    'No MX Records (Domain Dead)': 'This domain cannot receive emails',
-    'User Unknown': 'This email address does not exist'
-  }
-
-  return {
-    valid: false,
-    message: messages[result.status] || 'Email validation failed'
-  }
-}
-```
-
-## Possible Status Values
-
-| Status                                 | `isValid` | Description                                |
-| -------------------------------------- | --------- | ------------------------------------------ |
-| `Deliverable`                          | `true`    | Email passed all checks and is deliverable |
-| `Invalid Syntax`                       | `false`   | Email format is invalid                    |
-| `Disposable Email Detected`            | `false`   | Temporary/fake email provider detected     |
-| `No MX Records (Domain Dead)`          | `false`   | Domain has no mail servers configured      |
-| `User Unknown`                         | `false`   | SMTP server rejected the recipient         |
-| `Skipped SMTP (Provider blocks pings)` | `null`    | Major provider that blocks verification    |
-| `Timeout`                              | `null`    | SMTP server didn't respond in time         |
-| `Connection Error`                     | `null`    | Could not connect to mail server           |
-| `Server Reject (Greylist/Spam)`        | `null`    | Server blocked the verification attempt    |
-
-## Important Considerations
-
-### False Positives/Negatives
-
-- **False Negatives**: Some valid emails may return `null` because:
-  - Major providers (Gmail, Yahoo, Outlook) block SMTP verification
-  - Servers implement greylisting
-  - Anti-spam measures block unknown connections
-- **False Positives**: Some invalid emails may appear valid if:
-  - The SMTP server accepts all recipients (catch-all)
-  - The server doesn't immediately reject non-existent users
+---
 
 ### Rate Limiting
 
-- SMTP verification creates network connections to mail servers
-- Excessive validation attempts may trigger rate limits or blacklisting
-- Consider caching results or implementing your own rate limiting
+You’re opening real SMTP connections.
 
-### Privacy & Security
+Spam this aggressively and you might:
 
-- SMTP handshakes are visible in mail server logs
-- Some users may consider this intrusive
-- Use SMTP verification judiciously, especially for high-volume applications
+- Hit rate limits
+- Get blocked
+- Get your IP blacklisted
+
+So chill the fuck out and cache results.
+
+---
 
 ### Performance
 
-- Full validation can take 1-5 seconds per email
-- DNS lookups and SMTP connections introduce latency
-- Consider async processing for bulk validation
-- Skip SMTP checks for better performance (still catches syntax errors and disposable emails)
+Full validation can take 1–5 seconds.
+
+DNS + SMTP isn’t instant magic.
+
+If you need speed:
+
+- Skip SMTP
+- Run async
+- Batch process
+
+---
 
 ## Error Handling
 
-The library handles errors gracefully and never throws exceptions. All errors are returned in the `ValidationResult`:
+This library does **not** throw random-ass exceptions.
 
-```typescript
-const result = await validateEmail({ email: 'test@nonexistent-domain-xyz.com' })
-// Returns: { isValid: false, status: 'No MX Records (Domain Dead)' }
+Everything is returned cleanly inside `ValidationResult`.
 
-const result = await validateEmail({ email: 'not-an-email' })
-// Returns: { isValid: false, status: 'Invalid Syntax', reason: '...' }
+Example:
+
+```ts
+await validateEmail({ email: 'not-an-email' })
+// { isValid: false, status: 'Invalid Syntax' }
 ```
+
+No crashes. No drama. Just structured results.
+
+---
 
 ## License
 
-MIT © [Ekansh Jain](https://github.com/ejekanshjain)
+MIT © Ekansh Jain
+
+Do whatever you want with it.
+Just don’t blame the library when some weird mail server behaves like a diva.
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+PRs welcome.
+
+But please:
+
+- Don’t submit half-baked garbage.
+- Write tests.
+- Don’t break existing behavior.
+
+---
 
 ## Repository
 
 [https://github.com/ejekanshjain/simple-email-validator](https://github.com/ejekanshjain/simple-email-validator)
+
+---
+
+If you’re tired of fake signups, trash leads, and garbage email validation logic…
+
+Use this.
+
+Validate like a savage.
